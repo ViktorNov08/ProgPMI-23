@@ -45,18 +45,18 @@ class Collection:
 
     def add_certificate(self, certificate):
         self.certificates.append(certificate)
-        self.save_to_file('certificates.txt')  # «береженн€ зм≥н у файл≥
+        self.save_to_file('certificates.txt')  
 
     def remove_certificate_by_id(self, ID):
         self.certificates = [cert for cert in self.certificates if cert.ID != ID]
-        self.save_to_file('certificates.txt')  # «береженн€ зм≥н у файл≥
+        self.save_to_file('certificates.txt')  
 
     def edit_certificate_by_id(self, ID, new_data):
         for certificate in self.certificates:
             if certificate.ID == ID:
                 for field, value in new_data.items():
                     setattr(certificate, field, value)
-        self.save_to_file('certificates.txt')  # «береженн€ зм≥н у файл≥
+        self.save_to_file('certificates.txt') 
 
     def search_certificates(self, keyword):
         return [cert for cert in self.certificates if keyword.lower() in cert.__dict__.values()]
