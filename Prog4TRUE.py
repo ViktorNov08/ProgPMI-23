@@ -172,7 +172,7 @@ def main():
 
         elif choice == "8":
             filename = input("Enter a file name to save: ")
-            collection.save_to_file(filename)
+            collection.save_to file(filename)
             print("Certificates successfully saved to file.")
 
         elif choice == "9":
