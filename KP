@@ -1,0 +1,130 @@
+class VaccinationPointRequest:
+    vaccination_points = []
+    max_slots_per_hour = 20
+
+    def __init__(self, Id, point, time, date, name):
+        self.Id = Id
+        self.point = point
+        self.time = time
+        self.date = date
+        self.name = name
+
+    def __str__(self):
+        return f"#{self.Id}: {self.name}, {self.point}, {self.time}, {self.date}"
+
+    @classmethod
+    def read_from_file(cls, filename):
+        try:
+            with open(filename, 'r') as file:
+                for line in file:
+                    data = line.strip().split(',')
+                    if len(data) == 5:
+                        Id, point, time, date, name = data
+                        new_request = cls(int(Id), point, time, date, name)
+                        cls.vaccination_points.append(new_request)
+        except FileNotFoundError:
+            cls.vaccination_points = []
+
+    @classmethod
+    def save_to_file(cls, filename):
+        with open(filename, 'a') as file:
+            for point in cls.vaccination_points:
+                file.write(f"{point.Id},{point.point},{point.time},{point.date},{point.name}\n")
+
+    @classmethod
+    def validate(cls, point):
+        if not (point.Id and point.point and point.time and point.date and point.name):
+            return False
+        if not str(point.Id).isdigit():
+            return False
+        if not point.time.strip().count(':') == 1 or not all(map(str.isdigit, point.time.strip().replace(':', ''))):
+            return False
+        if not point.date.strip().count('.') == 2 or not all(map(str.isdigit, point.date.strip().replace('.', ''))):
+            return False
+        if not point.name.isalpha():
+            return False
+        return True
+
+    @classmethod
+    def add_request(cls, point):
+        if cls.validate(point):
+            # Перевіряємо, чи є вільні місця на годину та в пункті вакцинації
+            if len([p for p in cls.vaccination_points if p.point == point.point and p.time == point.time]) < cls.max_slots_per_hour:
+                # Перевіряємо, чи користувач вже забронював на цю годину та місце
+                if not any(existing_point for existing_point in cls.vaccination_points if existing_point.point == point.point and existing_point.time == point.time and existing_point.name == point.name):
+                    cls.vaccination_points.append(point)
+                    return True
+                else:
+                    print("You have already booked a slot for this time and location.")
+            else:
+                print("Can't book at this time or place. No available slots left for this hour.")
+        else:
+            print("Invalid input. Please check your input data.")
+
+    @classmethod
+    def get_most_booked_hours(cls):
+        hours = {}
+        for point in cls.vaccination_points:
+            time = point.time
+            if time in hours:
+                hours[time] += 1
+            else:
+                hours[time] = 1
+        max_count = max(hours.values())
+        return [hour for hour, count in hours.items() if count == max_count]
+
+    @classmethod
+    def get_most_booked_point(cls):
+        point_counts = {}
+        for point in cls.vaccination_points:
+            point_name = point.point
+            if point_name in point_counts:
+                point_counts[point_name] += 1
+            else:
+                point_counts[point_name] = 1
+        max_count = max(point_counts.values())
+        most_booked_point = [point for point, count in point_counts.items() if count == max_count]
+        return most_booked_point[0], max_count
+
+    @classmethod
+    def print_all_requests(cls):
+        for point in cls.vaccination_points:
+            print(point)
+
+if __name__ == '__main__':
+    VaccinationPointRequest.read_from_file('vaccination_requests.txt')
+
+    while True:
+        print("\n1. Add Vaccination Point Request")
+        print("2. Find Most Booked Hours")
+        print("3. Find Most Booked Vaccination Point")
+        print("4. Save Data to File")
+        print("5. Print All Requests")
+        print("6. Exit")
+
+        choice = input("Enter your choice: ")
+
+        if choice == '1':
+            Id = len(VaccinationPointRequest.vaccination_points) + 1
+            point = input("Enter vaccination point: ")
+            time = input("Enter time (hh:mm): ")
+            date = input("Enter date (dd.mm.yyyy): ")
+            name = input("Enter your name: ")
+            new_request = VaccinationPointRequest(Id, point, time, date, name)
+            if VaccinationPointRequest.add_request(new_request):
+                print("Request added successfully.")
+            else:
+                print("Failed to add request. Please check your input data.")
+        elif choice == '2':
+            most_booked_hours = VaccinationPointRequest.get_most_booked_hours()
+            print(f"The most booked hours: {', '.join(most_booked_hours)}")
+        elif choice == '3':
+            most_booked_point, count = VaccinationPointRequest.get_most_booked_point()
+            print(f"The most booked vaccination point is '{most_booked_point}' with {count} bookings.")
+        elif choice == '4':
+            VaccinationPointRequest.save_to_file('vaccination_requests.txt')
+            print("Data saved to file.")
+        elif choice == '5':
+            VaccinationPointRequest.print_all_requests()
+        elif choice == '6':
+            break
