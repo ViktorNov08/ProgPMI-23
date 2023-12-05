@@ -1,0 +1,139 @@
+import re
+
+class Validator:
+    @staticmethod
+    def validate_name(name):
+        return bool(re.match("^[a-zA-Z]+$", name))
+
+    @staticmethod
+    def validate_age(age):
+        return 0 < age < 150
+
+    @staticmethod
+    def validate_passport(passport):
+        return bool(re.match("^[A-Z]{2}\d{6}$", passport))
+
+class CovidCertificate:
+    def __init__(self, ID, username, international_passport, start_date, end_date, date_of_birth, vaccine):
+        self.ID = ID
+        self.username = username
+        self.international_passport = international_passport
+        self.start_date = start_date
+        self.end_date = end_date
+        self.date_of_birth = date_of_birth
+        self.vaccine = vaccine
+
+    def __str__(self):
+        return f"ID: {self.ID}, Username: {self.username}, Passport: {self.international_passport}, " \
+               f"Start Date: {self.start_date}, End Date: {self.end_date}, DOB: {self.date_of_birth}, Vaccine: {self.vaccine}"
+
+class Collection:
+    def __init__(self):
+        self.certificates = []
+
+    def load_certificates_from_file(self, filename):
+        try:
+            with open(filename, 'r') as file:
+                for line in file:
+                    data = line.strip().split(',')
+                    if len(data) == 7:
+                        ID, username, passport, start_date, end_date, dob, vaccine = data
+                        certificate = CovidCertificate(ID, username, passport, start_date, end_date, dob, vaccine)
+                        self.certificates.append(certificate)
+        except FileNotFoundError:
+            print(f"File '{filename}' not found.")
+
+    def add_certificate_strategy1(self, certificate):
+        self.certificates.append(certificate)
+        self.save_to_file('certificates.txt')  
+
+    def add_certificate_strategy2(self, certificate, position):
+        self.certificates.insert(position, certificate)
+        self.save_to_file('certificates.txt')  
+
+    def remove_certificate_by_id(self, ID):
+        self.certificates = [cert for cert in self.certificates if cert.ID != ID]
+        self.save_to_file('certificates.txt')  
+
+    def edit_certificate_by_id(self, ID, new_data):
+        for certificate in self.certificates:
+            if certificate.ID == ID:
+                for field, value in new_data.items():
+                    setattr(certificate, field, value)
+        self.save_to_file('certificates.txt') 
+
+    def search_certificates(self, keyword):
+        return [cert for cert in self.certificates if keyword.lower() in cert.__dict__.values()]
+
+    def sort_certificates(self, field):
+        self.certificates.sort(key=lambda certificate: getattr(certificate, field))
+
+    def display_certificates(self):
+        for certificate in self.certificates:
+            print(certificate)
+
+    def save_to_file(self, filename):
+        with open(filename, 'w') as file:
+            for certificate in self.certificates:
+                file.write(f"{certificate.ID},{certificate.username},{certificate.international_passport},"
+                           f"{certificate.start_date},{certificate.end_date},{certificate.date_of_birth},{certificate.vaccine}\n")
+
+def main():
+    collection = Collection()
+    collection.load_certificates_from_file('certificates.txt')
+
+    strategy = 1  
+
+    while True:
+        print("\nCOVID Certificate Management System")
+        print("1. Add Certificate (Strategy 1)")
+        print("2. Add Certificate (Strategy 2)")
+        print("3. Remove Certificate by ID")
+        print("4. Change Strategy")
+        print("5. Display Certificates")
+        print("6. Save to File")
+        print("7. Exit")
+
+        choice = input("Enter your choice: ")
+
+        if choice == "1" or choice == "2":
+            ID = input("Enter ID: ")
+            username = input("Enter Username: ")
+            international_passport = input("Enter Passport Number: ")
+            start_date = input("Enter Start Date: ")
+            end_date = input("Enter End Date: ")
+            date_of_birth = input("Enter Date of Birth: ")
+            vaccine = input("Enter Vaccine: ")
+            certificate = CovidCertificate(ID, username, international_passport, start_date, end_date, date_of_birth, vaccine)
+
+            if choice == "1":
+                collection.add_certificate_strategy1(certificate)
+            elif choice == "2":
+                position = int(input("Enter position to insert: "))
+                collection.add_certificate_strategy2(certificate, position)
+
+            print("Certificate added successfully.")
+
+        elif choice == "3":
+            ID = input("Enter ID to remove: ")
+            collection.remove_certificate_by_id(ID)
+            print("Certificate removed successfully.")
+
+        elif choice == "4":
+            strategy = 3 - strategy  
+            print(f"Switched to Strategy {strategy}")
+
+        elif choice == "5":
+            collection.display_certificates()
+
+        elif choice == "6":
+            filename = input("Enter filename to save: ")
+            collection.save_to_file(filename)
+            print("Certificates saved to file successfully.")
+
+        elif choice == "7":
+            print("Exiting program.")
+            break
+
+if __name__ == "__main__":
+    main()
